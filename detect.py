@@ -50,7 +50,7 @@ def yolo_detect(origin_img, model, device, imgsz, stride, half=True):
         pred = model(img, augment=False)[0]
 
     # Apply NMS
-    pred = non_max_suppression(pred)
+    pred = non_max_suppression(pred, conf_thres=0.5)
 
     # Process detections
     if len(pred[0]):
@@ -91,7 +91,7 @@ def fusion_detect(origin_img, mcnn, yolo, device, half):
             fusion_preds = torch.cat((fusion_preds, pred), 0)
 
     fusion_preds = fusion_preds.reshape((1, *fusion_preds.shape))
-    fusion_preds = non_max_suppression(fusion_preds)
+    fusion_preds = non_max_suppression(fusion_preds, conf_thres=0.5)
     return fusion_preds
 
 def main(opt):
@@ -112,7 +112,7 @@ def main(opt):
         # show results
         for *xyxy, conf, cls in reversed(fusion_preds[0]):
             cv2.rectangle(origin_img, (int(xyxy[0]), int(xyxy[1])), (int(xyxy[2]), int(xyxy[3])), (0, 0, 255), 1)
-
+    
     cv2.imshow("win", origin_img)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
