@@ -1,0 +1,1 @@
+Put yolov7-tiny weights here (eg. best.pt)

@@ -1,0 +1,1 @@
+Put mcnn weights here (eg. mcnn_marine_debris.param)
