@@ -4,6 +4,7 @@
 import numpy as np
 import scipy.ndimage as ndimage
 from sklearn.cluster import AgglomerativeClustering
+import cv2
 
 def getBoundingBox(cluster):
     '''

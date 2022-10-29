@@ -90,6 +90,11 @@ def fusion_detect(origin_img, mcnn, yolo, device, half):
             pred[:, :4] = xyxy2xywh(pred[:, :4])
             fusion_preds = torch.cat((fusion_preds, pred), 0)
 
+    pred = yolo_detect(origin_img, yolo, device, imgsz, stride, half)
+    if pred is not None:
+        pred[:, :4] = xyxy2xywh(pred[:, :4])
+        fusion_preds = torch.cat((fusion_preds, pred), 0)
+
     fusion_preds = fusion_preds.reshape((1, *fusion_preds.shape))
     fusion_preds = non_max_suppression(fusion_preds, conf_thres=0.5)
     return fusion_preds

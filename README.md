@@ -1,11 +1,21 @@
-# CDMNet-for-Marine-Debris-Detection
-This is **not** the official repository for CDMnet ([pdf](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9607840&fbclid=IwAR27cTIscjnq54a7CsZpp3f1WaGG1Setdouo1lUxnBLswvdQR4aHNZRCCdQ&tag=1))
+# DMNet-for-Marine-Debris-Detection
+*This is **not** the official repository for CDMnet ([pdf](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9607840&fbclid=IwAR27cTIscjnq54a7CsZpp3f1WaGG1Setdouo1lUxnBLswvdQR4aHNZRCCdQ&tag=1)) or [DMnet](https://github.com/Cli98/DMNet) ([pdf](https://par.nsf.gov/servlets/purl/10193024))*
 
 ## Introduction
-\-
+- There are two challenges in detecting objects from aerial images:
+  - Most objects appear small
+  - Uneven distribution of object positions reduces detection efficiency
+- CDMnet and DMnet is designed to detect small objects more efficiently in urban aerial scenes, and we need to detect floating objects on the sea, both of which have the same characteristics of being small in comparison to the scene
+<p align="center">
+  <img src="samples/framework.png" alt="marineDebris" width="100%"/>
+  <p align="center"> An Overview of our framework </p>
+</p>
+
 ## Sample
-![Input](samples/Trash.jpg)
-![Output](samples/Detect.jpg)
+<p align="center">
+  <img src="samples/Trash.jpg" alt="marineDebris" width="45%"/>
+  <img src="samples/Detect.jpg" alt="marineDebris" width="45%"/>
+</p>
 
 ## Density map generation
 There are already state of art algorithms that can achieve satisfying results on density map generation. In our project, the density map generation modular uses MCNN to achieve the task. 
@@ -27,7 +37,7 @@ Here provided the finetuned models on Marine Debris that available for direct ap
 | MCNN pretrained model| [Link](https://ntutcc-my.sharepoint.com/:u:/g/personal/111598401_cc_ntut_edu_tw/EYmH-lRwWUlInpmAWJMq25YB3eRLxhEGl9A1pPQ25-9HSw?e=m1LA5A) |
 | Finetuned Marine Debris Yolo model | [Link](https://ntutcc-my.sharepoint.com/:u:/g/personal/111598401_cc_ntut_edu_tw/EdL7rQNSC9tDiIuV3clyRUUBNc1R4K5yXBiGZEBUZ-k5uQ?e=fcmw4u) |
 | Dataset | Not available |
-| Yolov7 Config | [Link](https://ntutcc-my.sharepoint.com/:u:/g/personal/111598401_cc_ntut_edu_tw/Ef7Zi0EHBPRGpifs_X0tJVQB2Duat1x4y3OM9CH4sbYrPw?e=RcRvhW) |
+| Yolov7-tiny Config | [Link](https://ntutcc-my.sharepoint.com/:u:/g/personal/111598401_cc_ntut_edu_tw/Ef7Zi0EHBPRGpifs_X0tJVQB2Duat1x4y3OM9CH4sbYrPw?e=RcRvhW) |
 
 ## Usage
 ### 0. Prepare the dataset
@@ -35,6 +45,10 @@ Here provided the finetuned models on Marine Debris that available for direct ap
 * Prepare your dataset with point labels (for training MCNN) and annotation labels (for training yolo)
 
 ### 1. Training
+* Run the following command to install required library
+```bash
+pip install -r requirement.txt
+```
 * We introduce code from Ma to train [MCNN](https://github.com/CommissarMa/MCNN-pytorch). 
 * We introduce code from WongKinYiu to train [Yolo](https://github.com/WongKinYiu/yolov7)
 * Put your MCNN param file under `MCNN_weights/` and Yolov7-tiny weights file under `Yolov7_weights/`
