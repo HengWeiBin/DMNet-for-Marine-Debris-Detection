@@ -47,7 +47,7 @@ Here provided the finetuned models on Marine Debris that available for direct ap
 ### 1. Training
 * Run the following command to install required library
 ```bash
-pip install -r requirement.txt
+pip install -r requirements.txt
 ```
 * We introduce code from Ma to train [MCNN](https://github.com/CommissarMa/MCNN-pytorch). 
 * We introduce code from WongKinYiu to train [Yolo](https://github.com/WongKinYiu/yolov7)
