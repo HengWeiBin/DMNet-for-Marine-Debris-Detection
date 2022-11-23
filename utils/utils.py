@@ -62,7 +62,7 @@ def getClusterSubImages(img_origin, dmap_uint8):
     
     points = np.array(list(zip(x, y))).astype(np.int32)
     
-    clustering = AgglomerativeClustering(n_clusters=None, distance_threshold=max(img_origin.shape), compute_full_tree=True).fit(points)
+    clustering = AgglomerativeClustering(n_clusters=None, distance_threshold=max(img_origin.shape) * 2, compute_full_tree=True).fit(points)
     clusters = {}
     for i, cluster in enumerate(clustering.labels_):
         if cluster in clusters.keys():
@@ -70,6 +70,7 @@ def getClusterSubImages(img_origin, dmap_uint8):
         else:
             clusters[cluster] = [points[i]]
 
+    print(f"Clustering into {len(clusters.keys())} clusters ", end='')
     sub_images = []
     for cluster in clusters.values():
         (min_x, min_y), (max_x, max_y) = getBoundingBox(cluster)
