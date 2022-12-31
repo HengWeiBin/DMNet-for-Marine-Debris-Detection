@@ -10,9 +10,10 @@ import torch
 import numpy as np
 import argparse
 import os
+import random
 
 # yolo
-from utils.general import check_img_size, non_max_suppression, scale_coords, xyxy2xywh
+from utils.general import check_img_size, non_max_suppression, scale_coords, xyxy2xywh, xywh2xyxy
 from models.experimental import attempt_load
 from utils.datasets import letterbox, LoadImages
 from utils.torch_utils import time_synchronized
@@ -29,7 +30,7 @@ def loadYoloModel(weights_dir, device, opt):
             img = torch.rand((1, 3, 1920, 1088), device=device).half()
         else:
             img = torch.rand((1, 3, 1920, 1088), device=device)
-        for i in range(3):
+        for _ in range(3):
             model(img, augment=False)
 
     return model
@@ -47,17 +48,16 @@ def yolo_detect(origin_img, model, device, imgsz, stride, opt):
 
     # Inference
     with torch.no_grad():   # Calculating gradients would cause a GPU memory leak
-        pred = model(img, augment=False)[0]
-
-    # Apply NMS
-    pred = non_max_suppression(pred, conf_thres=opt.conf_thres)
+        pred = model(img, augment=False)[0][0]
 
     # Process detections
-    if len(pred[0]):
+    if len(pred):
         # Rescale boxes from img_size to origin_img size
-        pred[0][:, :4] = scale_coords(img.shape[2:], pred[0][:, :4], origin_img.shape).round()
+        pred[:, :4] = xywh2xyxy(pred[:, :4])
+        pred[:, :4] = scale_coords(img.shape[2:], pred[:, :4], origin_img.shape).round()
 
-        return pred[0]
+        return pred
+    return None
 
 def mcnn_detect(mcnn, img, device):
     mcnn.eval()
@@ -74,15 +74,14 @@ def mcnn_detect(mcnn, img, device):
     return dmap_uint8
 
 def fusion_detect(origin_img, mcnn, yolo, device, imgsz, stride, opt):
-    t1 = time_synchronized()
     dmap_uint8 = mcnn_detect(mcnn, origin_img, device)
-    t2 = time_synchronized()
     sub_imgs = getClusterSubImages(origin_img, dmap_uint8)
-    t3 = time_synchronized()
 
-    fusion_preds = torch.rand((0, 6), device=device)
+    fusion_preds = None#torch.rand((0, 6), device=device)
     for sub_img, (x1, y1), (_, _) in sub_imgs:
         pred = yolo_detect(sub_img, yolo, device, imgsz, stride, opt)
+        if fusion_preds is None:
+            fusion_preds = torch.rand((0, pred.size()[-1]), device=device)
         if pred is not None:
             pred[:, 0] += x1
             pred[:, 1] += y1
@@ -96,7 +95,7 @@ def fusion_detect(origin_img, mcnn, yolo, device, imgsz, stride, opt):
         pred[:, :4] = xyxy2xywh(pred[:, :4])
         fusion_preds = torch.cat((fusion_preds, pred), 0)
 
-    fusion_preds = fusion_preds.reshape((1, *fusion_preds.shape))
+    fusion_preds = fusion_preds.reshape((1, *fusion_preds.size()))
     fusion_preds = non_max_suppression(fusion_preds, conf_thres=opt.conf_thres)
     return fusion_preds
 
@@ -115,6 +114,10 @@ def main(opt):
     dataset = LoadImages(opt.source, img_size=imgsz, stride=stride)
     vid_writer = vid_path = None
 
+    # Get names and colors
+    names = yolo.module.names if hasattr(yolo, 'module') else yolo.names
+    colors = [[random.randint(0, 255) for _ in range(3)] for _ in names]
+
     # Save file
     if opt.save_csv:
         csv = open(os.path.join(opt.save_path, 'result.csv'), 'w', newline='\n', encoding='utf-8')
@@ -130,8 +133,14 @@ def main(opt):
 
         if len(fusion_preds[0]):
             # show results
-            for *xyxy, _, cls in reversed(fusion_preds[0]):
-                cv2.rectangle(im0, (int(xyxy[0]), int(xyxy[1])), (int(xyxy[2]), int(xyxy[3])), (0, 0, 255), 1)
+            for *xyxy, conf, cls in reversed(fusion_preds[0]):
+                label = f'{names[int(cls)]} {conf:.2f}'
+                c1, c2 = (int(xyxy[0]), int(xyxy[1])), (int(xyxy[2]), int(xyxy[3]))
+                cv2.rectangle(im0, c1, c2, colors[int(cls)], 1) # Bounding box
+                t_size = cv2.getTextSize(label, 0, fontScale=1 / 3, thickness=1)[0]
+                c2 = c1[0] + t_size[0], c1[1] - t_size[1] - 3
+                cv2.rectangle(im0, c1, c2, colors[int(cls)], -1, cv2.LINE_AA)  # filled
+                cv2.putText(im0, label, (c1[0], c1[1] - 2), 0, 1 / 3, [225, 255, 255], thickness=1, lineType=cv2.LINE_AA)
 
                 if opt.save_csv:  # Write to file
                     gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]

@@ -36,7 +36,6 @@ def getClusterSubImages(img_origin, dmap_uint8):
     #==========================================================================
     #                  Find Local Maxima
     #==========================================================================
-    t1 = time_synchronized()
     neighborhood_size = 3
     threshold = 2
     
@@ -54,13 +53,12 @@ def getClusterSubImages(img_origin, dmap_uint8):
         y_center = (dy.start + dy.stop - 1)/2    
         y.append(y_center)
     points = np.array(list(zip(x, y))).astype(np.int32)
-    t2 = time_synchronized()
     #==========================================================================
     #==========================================================================
         
     
     #==========================================================================
-    #                       Clustering and plot
+    #                           Clustering and plot
     #==========================================================================
     clustering = HDBSCAN(min_cluster_size=len(points) // 100).fit(points)
     clusters = {}
@@ -70,8 +68,6 @@ def getClusterSubImages(img_origin, dmap_uint8):
         else:
             clusters[cluster] = [points[i]]
 
-    print(f"Clustering into {len(clusters.keys())} clusters ", end='')
-    t3 = time_synchronized()
     sub_images = []
     for cluster in clusters.values():
         (min_x, min_y), (max_x, max_y) = getBoundingBox(cluster)
@@ -85,7 +81,6 @@ def getClusterSubImages(img_origin, dmap_uint8):
         sub_image = img_origin[y1 : y2, x1: x2]
         if all(sub_image.shape):
             sub_images.append([sub_image, (x1, y1), (x2, y2)])
-    t4 = time_synchronized()
     #==========================================================================
     #==========================================================================
     return sub_images
