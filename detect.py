@@ -74,8 +74,11 @@ def mcnn_detect(mcnn, img, device):
     return dmap_uint8
 
 def fusion_detect(origin_img, mcnn, yolo, device, imgsz, stride, opt):
+    t1 = time_synchronized()
     dmap_uint8 = mcnn_detect(mcnn, origin_img, device)
+    t2 = time_synchronized()
     sub_imgs = getClusterSubImages(origin_img, dmap_uint8)
+    t3 = time_synchronized()
 
     fusion_preds = torch.rand((0, 6), device=device)
     for sub_img, (x1, y1), (_, _) in sub_imgs:
