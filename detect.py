@@ -74,8 +74,11 @@ def mcnn_detect(mcnn, img, device):
     return dmap_uint8
 
 def fusion_detect(origin_img, mcnn, yolo, device, imgsz, stride, opt):
+    t1 = time_synchronized()
     dmap_uint8 = mcnn_detect(mcnn, origin_img, device)
-    sub_imgs = getClusterSubImages(origin_img, dmap_uint8)
+    t2 = time_synchronized()
+    sub_imgs = getClusterSubImages(origin_img, dmap_uint8, opt)
+    t3 = time_synchronized()
 
     fusion_preds = None#torch.rand((0, 6), device=device)
     for sub_img, (x1, y1), (_, _) in sub_imgs:
@@ -97,6 +100,12 @@ def fusion_detect(origin_img, mcnn, yolo, device, imgsz, stride, opt):
 
     fusion_preds = fusion_preds.reshape((1, *fusion_preds.size()))
     fusion_preds = non_max_suppression(fusion_preds, conf_thres=opt.conf_thres)
+
+    if opt.debug:
+        print('Density detect:{:.1f}ms'.format((t2 - t1) * 1e3))
+        print('Get clusters:{:.1f}ms'.format((t3 - t2) * 1e3))
+        print('Yolo detect:{:.1f}ms'.format((time_synchronized() - t3) * 1e3))
+        cv2.imshow('dmap', cv2.applyColorMap(dmap_uint8, cv2.COLORMAP_JET))
     return fusion_preds
 
 def main(opt):
@@ -106,7 +115,7 @@ def main(opt):
 
     # load model
     mcnn = MCNN().to(device)
-    mcnn.load_state_dict(torch.load(mcnn_param_dir))
+    mcnn.load_state_dict(torch.load(mcnn_param_dir))    
     yolo = loadYoloModel(yolo_weights_dir, device, opt)
 
     stride = int(yolo.stride.max())  # model stride
@@ -150,7 +159,7 @@ def main(opt):
                     xywh_drone[1] = int(xywh_drone[1] - xywh_drone[3] / 2)
                     line = [filename.split('.')[0], str(int(cls)), ','.join([str(flt) for flt in xywh_drone])]
                     csv.write(','.join(line) + '\n')
-        cv2.imshow(f"win", im0)
+        cv2.imshow(f"Predict Result", im0)
         
         # Save results (image with detections)
         if opt.save_img:
@@ -174,10 +183,7 @@ def main(opt):
 
         print(f'Done. ({(1E3 * (t2 - t1)):.1f}ms) Inference')
                     
-        if dataset.mode == 'video':
-            key = cv2.waitKey(1)
-        elif dataset.mode == 'image':
-            key = cv2.waitKey(1)
+        key = cv2.waitKey(0 if opt.debug else 1)
         if key == 27:
             break
     cv2.destroyAllWindows()
@@ -196,6 +202,7 @@ if __name__ == '__main__':
     parser.add_argument('--save-img', action='store_true', help='Save output')
     parser.add_argument('--save-csv', action='store_true', help='Save output as csv' )
     parser.add_argument('--save-path', type=str, default='output', help='save path of inference output')
+    parser.add_argument('--debug', action='store_true', help='show middle results')
     opt = parser.parse_args()
 
     if opt.device == 'cpu':

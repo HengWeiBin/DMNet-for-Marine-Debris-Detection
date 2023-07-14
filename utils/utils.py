@@ -5,6 +5,7 @@ import numpy as np
 import scipy.ndimage as ndimage
 from utils.torch_utils import time_synchronized
 from hdbscan import HDBSCAN
+import cv2
 
 def getBoundingBox(cluster):
     '''
@@ -22,7 +23,7 @@ def getBoundingBox(cluster):
     
     return (min_x, min_y), (max_x, max_y)
 
-def getClusterSubImages(img_origin, dmap_uint8):
+def getClusterSubImages(img_origin, dmap_uint8, opt):
     '''
     Find all local maxima points from density map (dmap_uint8),
     then cluster these points with distance,
@@ -36,6 +37,7 @@ def getClusterSubImages(img_origin, dmap_uint8):
     #==========================================================================
     #                  Find Local Maxima
     #==========================================================================
+    t1 = time_synchronized()
     neighborhood_size = 3
     threshold = 2
     
@@ -53,6 +55,7 @@ def getClusterSubImages(img_origin, dmap_uint8):
         y_center = (dy.start + dy.stop - 1)/2    
         y.append(y_center)
     points = np.array(list(zip(x, y))).astype(np.int32)
+    t2 = time_synchronized()
     #==========================================================================
     #==========================================================================
         
@@ -60,7 +63,7 @@ def getClusterSubImages(img_origin, dmap_uint8):
     #==========================================================================
     #                           Clustering and plot
     #==========================================================================
-    clustering = HDBSCAN(min_cluster_size=len(points) // 100).fit(points)
+    clustering = HDBSCAN(min_cluster_size=max(2, len(points) // 100)).fit(points)
     clusters = {}
     for i, cluster in enumerate(clustering.labels_):
         if cluster in clusters.keys():
@@ -68,6 +71,7 @@ def getClusterSubImages(img_origin, dmap_uint8):
         else:
             clusters[cluster] = [points[i]]
 
+    t3 = time_synchronized()
     sub_images = []
     for cluster in clusters.values():
         (min_x, min_y), (max_x, max_y) = getBoundingBox(cluster)
@@ -81,6 +85,23 @@ def getClusterSubImages(img_origin, dmap_uint8):
         sub_image = img_origin[y1 : y2, x1: x2]
         if all(sub_image.shape):
             sub_images.append([sub_image, (x1, y1), (x2, y2)])
+    t4 = time_synchronized()
     #==========================================================================
     #==========================================================================
+    if opt.debug:
+        print(f"Clustering into {len(clusters.keys())} clusters ", end='')
+        print("\nTotal local Maxima Points:", len(points))
+        print('\nFind Local Maxima:{:.1f}ms'.format((t2 - t1) * 1e3))
+        print('Clustering:{:.1f}ms'.format((t3 - t2) * 1e3))
+        print('Get sub-images:{:.1f}ms'.format((t4 - t3) * 1e3))
+
+        localmax_img = img_origin.copy()
+        cluster_img = img_origin.copy()
+        for point in points:
+            cv2.circle(localmax_img, (point[0], point[1]), 2, (0, 0, 255), -1)
+        for cluster in clusters.values():
+            (min_x, min_y), (max_x, max_y) = getBoundingBox(cluster)
+            cv2.rectangle(cluster_img, (min_x, min_y), (max_x, max_y), (0, 0, 255), 2)
+        cv2.imshow('Local Maxima', localmax_img)
+        cv2.imshow('Clusters', cluster_img)
     return sub_images
