@@ -34,10 +34,10 @@ Here provided the finetuned models on Marine Debris that available for direct ap
 
 | Download | Links |
 | :-: | :-: |
-| MCNN pretrained model| [Link](https://ntutcc-my.sharepoint.com/:u:/g/personal/111598401_cc_ntut_edu_tw/EYmH-lRwWUlInpmAWJMq25YB3eRLxhEGl9A1pPQ25-9HSw?e=m1LA5A) |
-| Finetuned Marine Debris Yolo model | [Link](https://ntutcc-my.sharepoint.com/:u:/g/personal/111598401_cc_ntut_edu_tw/EdL7rQNSC9tDiIuV3clyRUUBNc1R4K5yXBiGZEBUZ-k5uQ?e=fcmw4u) |
+| MCNN pretrained model| [Link](https://github.com/HengWeiBin/DMNet-for-Marine-Debris-Detection/files/14354856/MCNN_weights.zip) |
+| Finetuned Marine Debris Yolo model | [Link](https://github.com/HengWeiBin/DMNet-for-Marine-Debris-Detection/files/14354858/Yolov7_weights.zip) |
 | Dataset | Not available |
-| Yolov7-tiny Config | [Link](https://ntutcc-my.sharepoint.com/:u:/g/personal/111598401_cc_ntut_edu_tw/Ef7Zi0EHBPRGpifs_X0tJVQB2Duat1x4y3OM9CH4sbYrPw?e=RcRvhW) |
+| Yolov7-tiny Config | [Link](https://github.com/HengWeiBin/DMNet-for-Marine-Debris-Detection/files/14354860/yolov7-config.zip) |
 
 ## Usage
 ### 0. Prepare the dataset
